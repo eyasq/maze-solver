@@ -19,7 +19,7 @@ class Window:
         while(self.running == True):
             self.redraw()
     
-    def draw_lin(self, line, fill_color):
+    def draw_line(self, line, fill_color):
         line.draw(self.canvas, fill_color)
         
 
@@ -37,8 +37,14 @@ def main():
     line = Line(point1, point2)
     line2 = Line(point3, point4)
     line.draw(win.canvas, "black")
-    line2.draw(win.canvas, "magenta")
+
+    cell = Cell(win)
+    cell.draw(10,10,100,100)
+    cell2 = Cell(win)
+    cell2.draw(50,50,200,200)
+    cell.draw_move(cell2, True)
     win.wait_for_close()
+
 
 
 class Point:
@@ -57,5 +63,56 @@ class Line:
             self.point1.x, self.point1.y, self.point2.x, self.point2.y, fill=fill_color, width=2
         )
     
+class Cell:
+    def __init__(self, window):
+        self.has_left_wall = True
+        self.has_right_wall = True
+        self.has_top_wall = True
+        self.has_bottom_wall = True
+        self.__x1 = -1
+        self.__x2 = -1
+        self.__y1 = -1
+        self.__y2 = -1
+        self.__win = window
+    def draw(self,x1,y1,x2,y2):
+        self.__x1 = x1
+        self.__x2 = x2
+        self.__y1 = y1
+        self.__y2 = y2
+        if self.has_left_wall:
+            point1 = Point(x1,y1)
+            point2 = Point(x1, y2)
+            line = Line(point1, point2)
+            line.draw(self.__win.canvas, "black")
+        if self.has_right_wall:
+            point1 = Point(x2,y1)
+            point2 = Point(x2,y2)
+            line  = Line(point1,point2)
+            line.draw(self.__win.canvas, "black")
+        if self.has_top_wall:
+            point1 = Point(x1,y1)
+            point2 = Point(x2,y1)
+            line  = Line(point1,point2)
+            line.draw(self.__win.canvas, "black")
+        if self.has_bottom_wall:
+            point1 = Point(x1,y2)
+            point2 = Point(x2,y2)
+            line  = Line(point1,point2)
+            line.draw(self.__win.canvas, "black")
+        
+    def draw_move(self, to_cell, undo=False):
+        self.center_x = (self.__x1 + self.__x2)/2
+        self.center_y = (self.__y1+self.__y2)/2
+        to_cell.center_x = (to_cell.__x1+to_cell.__x2)/2
+        to_cell.center_y = (to_cell.__y1+to_cell.__y2)/2
+        center_self = Point(self.center_x, self.center_y)
+        center_to = Point(to_cell.center_x, to_cell.center_y)
+        line = Line(center_self, center_to)
+        if undo==False:
+            line.draw(self.__win.canvas, "red")
+        else:
+            line.draw(self.__win.canvas, "gray")
+
+
 
 main()
