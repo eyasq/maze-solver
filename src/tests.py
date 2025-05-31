@@ -29,13 +29,10 @@ class Tests(unittest.TestCase):
         num_rows = 5
         m = Maze(0, 0, num_rows, num_cols, 10, 10)
         
-        # Test entrance (top-left cell)
         self.assertFalse(m._Maze__cells[0][0].has_top_wall)
         
-        # Test exit (bottom-right cell)
         self.assertFalse(m._Maze__cells[-1][-1].has_bottom_wall)
         
-        # Verify other walls still exist
         self.assertTrue(m._Maze__cells[0][0].has_bottom_wall)
         self.assertTrue(m._Maze__cells[-1][-1].has_top_wall)
 

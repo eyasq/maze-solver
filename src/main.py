@@ -1,5 +1,6 @@
 from tkinter import Tk, BOTH, Canvas
 import time
+import random
 class Window:
     def __init__(self,width, height ):
         self.width = width
@@ -83,6 +84,7 @@ class Cell:
         self.__y1 = -1
         self.__y2 = -1
         self.__win = window
+        self.visited = False
     def draw(self,x1,y1,x2,y2):
         self.__x1 = x1
         self.__x2 = x2
@@ -142,7 +144,7 @@ class Cell:
 
 
 class Maze:
-    def __init__(self, x1 ,y1, num_rows, num_cols, cell_size_x, cell_size_y, win=None):
+    def __init__(self, x1 ,y1, num_rows, num_cols, cell_size_x, cell_size_y, win=None, seed=None):
         self.x1 = x1
         self.y1 = y1
         self.num_rows = num_rows
@@ -151,6 +153,8 @@ class Maze:
         self.cell_size_y = cell_size_y
         self.win = win
         self.__cells = []
+        if seed is not None:
+            random.seed(seed)
         self.__create_cells()
         self.__break_entrance_and_exit()
     def __create_cells(self):
@@ -179,4 +183,49 @@ class Maze:
         self.__draw_cell(0,0)
         self.__cells[-1][-1].has_bottom_wall = False
         self.__draw_cell(-1,-1)
+    
+    def __break_walls_r(self, i, j):
+        self.__cells[i][j].visited = True
+        
+        while True:
+            to_visit = []
+            
+            # Left neighbor (i-1, j)
+            if i > 0 and not self.__cells[i-1][j].visited:
+                to_visit.append((i-1, j, "left"))
+            
+            # Right neighbor (i+1, j)
+            if i < self.num_cols - 1 and not self.__cells[i+1][j].visited:
+                to_visit.append((i+1, j, "right"))
+            
+            # Top neighbor (i, j-1)
+            if j > 0 and not self.__cells[i][j-1].visited:
+                to_visit.append((i, j-1, "up"))
+            
+            # Bottom neighbor (i, j+1)
+            if j < self.num_rows - 1 and not self.__cells[i][j+1].visited:
+                to_visit.append((i, j+1, "down"))
+            
+            # If no directions to go, draw cell and return
+            if len(to_visit) == 0:
+                self.__draw_cell(i, j)
+                return
+            
+            # Randomly pick a direction to go
+            next_i, next_j, direction = random.choice(to_visit)
+            
+            if direction == "left":
+                self.__cells[i][j].has_left_wall = False
+                self.__cells[next_i][next_j].has_right_wall = False
+            elif direction == "right":
+                self.__cells[i][j].has_right_wall = False
+                self.__cells[next_i][next_j].has_left_wall = False
+            elif direction == "up":
+                self.__cells[i][j].has_top_wall = False
+                self.__cells[next_i][next_j].has_bottom_wall = False
+            elif direction == "down":
+                self.__cells[i][j].has_bottom_wall = False
+                self.__cells[next_i][next_j].has_top_wall = False
+            
+            self.__break_walls_r(next_i, next_j)
 
