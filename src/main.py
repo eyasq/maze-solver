@@ -7,7 +7,7 @@ class Window:
         self.width = width
         self.height = height
         self.__root = Tk()
-        self.__root.title = "Maze Solver"
+        self.__root.title = "Maze Solva"
         self.canvas = Canvas(self.__root, width=self.width, height=self.height)
         self.canvas.pack()
         self.running = False
@@ -31,19 +31,6 @@ class Window:
 
 def main():
     win = Window(1280, 960)
-    point1 = Point(0, 0)
-    point2 = Point(40, 40)
-    point3 = Point(100, 0)
-    point4 = Point(50, 50)
-    line = Line(point1, point2)
-    line2 = Line(point3, point4)
-    # line.draw(win.canvas, "black")
-
-    cell = Cell(win)
-    # cell.draw(10,10,100,100)
-    cell2 = Cell(win)
-    # cell2.draw(50,50,200,200)
-    cell.draw_move(cell2, True)
     maze = Maze(
         x1=50,
         y1=50,
@@ -53,6 +40,7 @@ def main():
         cell_size_y=40,
         win=win
     )
+    maze.solve()
     win.wait_for_close()
 
 
@@ -175,7 +163,7 @@ class Maze:
             random.seed(seed)
         self.__create_cells()
         self.__break_entrance_and_exit()
-        if self.win:  # Only generate maze if we have a window (for visual display)
+        if self.win:  
             self.__break_walls_r(0, 0)
             self.__reset_cells_visited()
 
@@ -204,14 +192,14 @@ class Maze:
     def _animate(self):
         if self.win:
             self.win.redraw()
+            time.sleep(0.01)
 
     def __break_entrance_and_exit(self):
-        # Break entrance (top-left cell) - remove top wall only
+    
         self.__cells[0][0].has_top_wall = False
         if self.win:
             self.__draw_cell(0, 0)
     
-        # Break exit (bottom-right cell) - remove bottom wall only
         self.__cells[self.num_cols - 1][self.num_rows - 1].has_bottom_wall = False
         if self.win:
             self.__draw_cell(self.num_cols - 1, self.num_rows - 1)
@@ -227,29 +215,23 @@ class Maze:
         while True:
             to_visit = []
             
-            # Left neighbor (i-1, j)
             if i > 0 and not self.__cells[i-1][j].visited:
                 to_visit.append((i-1, j, "left"))
             
-            # Right neighbor (i+1, j)
             if i < self.num_cols - 1 and not self.__cells[i+1][j].visited:
                 to_visit.append((i+1, j, "right"))
             
-            # Top neighbor (i, j-1)
             if j > 0 and not self.__cells[i][j-1].visited:
                 to_visit.append((i, j-1, "up"))
             
-            # Bottom neighbor (i, j+1)
             if j < self.num_rows - 1 and not self.__cells[i][j+1].visited:
                 to_visit.append((i, j+1, "down"))
             
-            # If no directions to go, draw cell and return
             if len(to_visit) == 0:
                 if self.win:
                     self.__draw_cell(i, j)
                 return
             
-            # Randomly pick a direction to go
             next_i, next_j, direction = random.choice(to_visit)
             
             if direction == "left":
@@ -266,3 +248,43 @@ class Maze:
                 self.__cells[next_i][next_j].has_top_wall = False
             
             self.__break_walls_r(next_i, next_j)
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+    def _solve_r(self, i, j):
+        self._animate()
+        
+        self.__cells[i][j].visited = True
+        
+        if i == self.num_cols - 1 and j == self.num_rows - 1:
+            return True
+        
+        directions = [
+            # Left
+            (i - 1, j, lambda: not self.__cells[i][j].has_left_wall),
+            # Right  
+            (i + 1, j, lambda: not self.__cells[i][j].has_right_wall),
+            # Up
+            (i, j - 1, lambda: not self.__cells[i][j].has_top_wall),
+            # Down
+            (i, j + 1, lambda: not self.__cells[i][j].has_bottom_wall)
+        ]
+        
+        for next_i, next_j, no_wall_check in directions:
+            if (0 <= next_i < self.num_cols and 
+                0 <= next_j < self.num_rows and 
+                no_wall_check() and 
+                not self.__cells[next_i][next_j].visited):
+                
+                self.__cells[i][j].draw_move(self.__cells[next_i][next_j], False)
+                
+                if self._solve_r(next_i, next_j):
+                    return True
+                
+                self.__cells[i][j].draw_move(self.__cells[next_i][next_j], True)
+        
+        return False
+    
+
+main()
